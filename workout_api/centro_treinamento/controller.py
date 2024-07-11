@@ -6,6 +6,7 @@ from workout_api.centro_treinamento.models import CentroTreinamentoModel
 
 from workout_api.contrib.dependencies import DatabaseDependency
 from sqlalchemy.future import select
+from fastapi_pagination import Page, add_pagination, paginate
 
 router = APIRouter()
 
@@ -32,14 +33,14 @@ async def post(
     '/', 
     summary='Consultar todos os centros de treinamento',
     status_code=status.HTTP_200_OK,
-    response_model=list[CentroTreinamentoOut],
+    response_model=Page[CentroTreinamentoOut],
 )
-async def query(db_session: DatabaseDependency) -> list[CentroTreinamentoOut]:
-    centros_treinamento_out: list[CentroTreinamentoOut] = (
+async def query(db_session: DatabaseDependency) -> Page[CentroTreinamentoOut]:
+    centros_treinamento_out = (
         await db_session.execute(select(CentroTreinamentoModel))
     ).scalars().all()
     
-    return centros_treinamento_out
+    return paginate(centros_treinamento_out)
 
 
 @router.get(
@@ -49,7 +50,7 @@ async def query(db_session: DatabaseDependency) -> list[CentroTreinamentoOut]:
     response_model=CentroTreinamentoOut,
 )
 async def get(id: UUID4, db_session: DatabaseDependency) -> CentroTreinamentoOut:
-    centro_treinamento_out: CentroTreinamentoOut = (
+    centro_treinamento_out = (
         await db_session.execute(select(CentroTreinamentoModel).filter_by(id=id))
     ).scalars().first()
 
@@ -60,3 +61,6 @@ async def get(id: UUID4, db_session: DatabaseDependency) -> CentroTreinamentoOut
         )
     
     return centro_treinamento_out
+
+
+add_pagination(router)

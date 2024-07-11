@@ -6,6 +6,7 @@ from workout_api.categorias.models import CategoriaModel
 
 from workout_api.contrib.dependencies import DatabaseDependency
 from sqlalchemy.future import select
+from fastapi_pagination import Page, add_pagination, paginate
 
 router = APIRouter()
 
@@ -32,12 +33,12 @@ async def post(
     '/', 
     summary='Consultar todas as Categorias',
     status_code=status.HTTP_200_OK,
-    response_model=list[CategoriaOut],
+    response_model=Page[CategoriaOut],
 )
-async def query(db_session: DatabaseDependency) -> list[CategoriaOut]:
-    categorias: list[CategoriaOut] = (await db_session.execute(select(CategoriaModel))).scalars().all()
+async def query(db_session: DatabaseDependency) -> Page[CategoriaOut]:
+    categorias = (await db_session.execute(select(CategoriaModel))).scalars().all()
     
-    return categorias
+    return paginate(categorias)
 
 
 @router.get(
@@ -47,7 +48,7 @@ async def query(db_session: DatabaseDependency) -> list[CategoriaOut]:
     response_model=CategoriaOut,
 )
 async def get(id: UUID4, db_session: DatabaseDependency) -> CategoriaOut:
-    categoria: CategoriaOut = (
+    categoria = (
         await db_session.execute(select(CategoriaModel).filter_by(id=id))
     ).scalars().first()
 
@@ -58,3 +59,6 @@ async def get(id: UUID4, db_session: DatabaseDependency) -> CategoriaOut:
         )
     
     return categoria
+
+
+add_pagination(router)
